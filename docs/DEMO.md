@@ -181,54 +181,154 @@ KiraCode will create the project, build it, fix any errors, and start it — all
 
 ## Demo 2: UI Screenshot Analysis (Vision AI)
 
-KiraCode can analyze UI screenshots using **OpenCV + Qwen-VL** vision model, detecting components, layout, colors, and generating code recommendations.
+> KiraCode can analyze UI screenshots using **OpenCV + Qwen-VL** vision model, detecting components, layout, colors, and generating code recommendations — all through a single conversational command.
+
+---
 
 ### User Input
 
 ```
-帮我分析这个截图 tests/screenshots/demo.png
+You: 帮我分析这个截图 tests/screenshots/demo.png
 ```
 
-### Analysis Result
+### KiraCode's Thinking Process
 
-Input: Baidu logo image (6617 bytes)
+```
+Thinking: 用户要求分析一张截图。这是一个图片分析任务，我应该使用
+screenshot_analyze 工具，而不是 read_file（read_file 只能读文本文件，
+读二进制图片会返回乱码）。
+```
 
-**Components Detected** (4 components, confidence 0.95-0.98):
+### Execution Flow
 
-| # | Type | Text | Confidence |
-|---|------|------|------------|
-| 1 | image | — | 0.98 |
+```
+Executing 1 tool(s) in parallel...
+[1/1] OK — 4 components detected
+```
+
+### KiraCode's Analysis Response
+
+```
+## 截图分析结果
+
+### 识别到的组件 (4个)
+
+| # | 类型 | 内容 | 置信度 |
+|---|------|------|--------|
+| 1 | image | Logo 整体 | 0.98 |
 | 2 | text | Baidu | 0.97 |
-| 3 | icon | — | 0.96 |
+| 3 | icon | 爪印图标 | 0.96 |
 | 4 | text | 百度 | 0.95 |
 
-**Layout**: Horizontal alignment — "Baidu" text, paw print icon, "百度" text placed side by side.
+### 布局分析
+水平排列 — "Baidu" 文字、蓝色爪印图标、"百度" 文字从左到右排列。
 
-**Colors Extracted**:
-- Primary: `#ff0000` (red)
-- Secondary: `#000000` (black)
-- Background: `#ffffff` (white)
-- Accent: `#0000ff` (blue)
+### 配色方案
+- 主色: #ff0000 (红色)
+- 辅色: #000000 (黑色)
+- 背景: #ffffff (白色)
+- 强调色: #0000ff (蓝色)
+- 调色板: [红色, 黑色, 蓝色, 白色]
 
-**Typography**: Sans-serif font, bold headings at 24px, body text at 16px.
+### 排版风格
+- 字体: sans-serif
+- 标题: 粗体, 24px
+- 正文: 常规, 16px
 
-**Tech Recommendations**:
-- Framework: React
-- Styling: Tailwind CSS
-- Layout: Flexbox
+### 技术建议
+- 框架: React
+- 样式: Tailwind CSS
+- 布局: Flexbox
 
-**Style Suggestions**: Use a clean, minimalistic approach with high contrast between red and black elements.
+### 实现建议
+使用简洁的最小化设计，红黑元素之间保持高对比度。
+推荐使用 Flexbox 进行 Logo 组件的水平对齐。
+```
+
+---
+
+### What KiraCode Did Autonomously
+
+| Step | Action | Result |
+|------|--------|--------|
+| 1 | Detected image analysis request | Routed to screenshot_analyze tool |
+| 2 | OpenCV preprocessing (resize + blur) | Optimized for vision API |
+| 3 | Called Qwen-VL vision model | Structured JSON response |
+| 4 | Parsed & formatted results | Human-readable report |
+| 5 | Generated summary with recommendations | Done |
+
+### Key Capabilities Demonstrated
+
+#### 1. Smart Tool Routing
+KiraCode correctly identifies image files and uses `screenshot_analyze` instead of `read_file`. The system prompt explicitly prevents binary file reading mistakes.
+
+#### 2. OpenCV Preprocessing
+Images are automatically resized (max 1024x1024), denoised with Gaussian blur, and encoded as JPEG for efficient API transmission.
+
+#### 3. Structured Vision Analysis
+Qwen-VL returns structured JSON with:
+- Component detection (type, text, position, confidence)
+- Layout analysis (flex/grid/absolute, direction)
+- Color extraction (primary, secondary, palette)
+- Typography detection (font family, sizes)
+- Tech recommendations (framework, styling, layout strategy)
+
+#### 4. Result Caching
+Same image analyzed twice? Second call returns cached results instantly (MD5-based cache).
+
+---
 
 ### How It Works
 
-1. **OpenCV Preprocessing** — Resize, Gaussian blur, JPEG encoding for optimal vision API input
-2. **Qwen-VL Analysis** — Alibaba's vision model analyzes the image with structured JSON output
-3. **Component Detection** — Identifies UI elements (buttons, text, icons, images) with positions and confidence scores
-4. **Code Generation** — Recommends framework, styling approach, and layout strategy
+```
+User: "帮我分析这个截图 path/to/image.png"
+    │
+    ▼
+┌─────────────────────────────┐
+│  KiraCode ChatSession       │  Detects image analysis intent
+│  - Routes to screenshot tool│  (not read_file)
+└──────────┬──────────────────┘
+           │
+           ▼
+┌─────────────────────────────┐
+│  screenshot_analyze skill   │
+│  - Load image bytes         │
+│  - MD5 cache check          │
+│  - OpenCV preprocessing     │
+│    (resize, blur, JPEG)     │
+└──────────┬──────────────────┘
+           │
+           ▼
+┌─────────────────────────────┐
+│  Qwen-VL Vision Model       │  Alibaba's multimodal AI
+│  (qwen-vl-max via DashScope)│  Analyzes image + prompt
+└──────────┬──────────────────┘
+           │
+           ▼
+┌─────────────────────────────┐
+│  Structured JSON Output     │
+│  - components[]             │
+│  - layout{}                 │
+│  - colors{}                 │
+│  - typography{}             │
+│  - tech_recommendations{}   │
+└─────────────────────────────┘
+```
+
+---
 
 ### Try It Yourself
 
 ```bash
+# Clone and install
+git clone https://github.com/luozhonglzw/mini-kira-code.git
+cd mini-kira-code
+pip install -e .
+
+# Set up API key (for vision model)
+echo DASHSCOPE_API_KEY=your-key-here >> .env
+
+# Run KiraCode
 python -m kiracode.cli.chat
 
 # Then type:
@@ -240,3 +340,20 @@ Or run the standalone test:
 ```bash
 python tests/test_screenshot_live.py
 ```
+
+### Supported Formats
+
+| Format | Extension | Status |
+|--------|-----------|--------|
+| PNG | .png | Supported |
+| JPEG | .jpg, .jpeg | Supported |
+| WebP | .webp | Supported |
+| BMP | .bmp | Supported |
+
+### Detail Levels
+
+| Level | Description | Speed |
+|-------|-------------|-------|
+| `fast` | Quick scan, basic components | Fast |
+| `standard` | Full analysis with colors & typography | Medium |
+| `detailed` | Deep analysis with denoising | Slower |
