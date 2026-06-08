@@ -464,7 +464,14 @@ Before each action, think step by step:
 7. Create src/main/resources/static/css/style.css and static/js/app.js
 8. Build: run_command("cd /d D:/agent/agent-project-codex-7/tests/project/PROJECT_NAME && mvn.cmd clean package -DskipTests")
 9. If build fails → read error → fix → rebuild (repeat up to 5 times)
-10. Run: run_command("cd /d D:/agent/agent-project-codex-7/tests/project/PROJECT_NAME && start /B java -jar target/PROJECT-0.0.1-SNAPSHOT.jar")
+10. Create a start.bat to run in background:
+    write_file("D:/agent/agent-project-codex-7/tests/project/PROJECT_NAME/start.bat",
+      '@echo off\r\ncd /d %~dp0\r\nstart "" java -jar target\\PROJECT-0.0.1-SNAPSHOT.jar > app.log 2>&1\r\nexit')
+    Then run: run_command("cmd.exe /c D:/agent/agent-project-codex-7/tests/project/PROJECT_NAME/start.bat")
+    This returns immediately because start.bat calls start and exits.
+    Wait 5s for startup: run_command("ping -n 6 127.0.0.1 >nul")
+    Check logs: run_command("type D:\\agent\\agent-project-codex-7\\tests\\project\\PROJECT_NAME\\app.log")
+    Test: run_command("curl -s http://localhost:8080/")
 
 ## Spring Boot specific:
 - Use @RestController for API endpoints, @Controller for pages
@@ -487,6 +494,8 @@ If 404 on http://localhost:8080/:
 
 If "address already in use":
   → Kill the old process: run_command("taskkill /F /IM java.exe")
+  → Wait: run_command("ping -n 3 127.0.0.1 >nul")
+  → Then restart
 
 ## Windows Environment
 - Shell commands run via cmd.exe (NOT bash/WSL)
