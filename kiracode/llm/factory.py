@@ -49,7 +49,7 @@ def create_provider(
     elif provider_lower == "mimo":
         from kiracode.llm.mimo_provider import MimoProvider
         return MimoProvider(
-            api_key=kwargs.pop("api_key", None) or os.environ.get("ANTHROPIC_AUTH_TOKEN") or os.environ.get("MIMO_API_KEY") or "tp-c9p0u78w6r531hwctgt9h0yyml6mwzdglk72uhg8ipfu2ebk",
+            api_key=kwargs.pop("api_key", None) or os.environ.get("ANTHROPIC_AUTH_TOKEN") or os.environ.get("MIMO_API_KEY"),
             model=model or "mimo-v2.5-pro",
             base_url=kwargs.pop("base_url", os.environ.get("ANTHROPIC_BASE_URL", "https://token-plan-cn.xiaomimimo.com/anthropic")),
             timeout=kwargs.pop("timeout", 300),

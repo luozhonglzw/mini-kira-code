@@ -68,12 +68,21 @@ class ChatSession:
         self.total_prompt_tokens: int = 0
         self.total_completion_tokens: int = 0
 
-        # LLM Provider
+        # LLM Provider — load key from: arg > .env > env vars
         import os
+        from pathlib import Path
         from kiracode.llm.factory import create_provider
+
+        # Auto-load .env file if present
+        env_file = Path(__file__).resolve().parent.parent.parent / ".env"
+        if env_file.exists():
+            for line in env_file.read_text(encoding="utf-8").splitlines():
+                line = line.strip()
+                if line and not line.startswith("#") and "=" in line:
+                    k, v = line.split("=", 1)
+                    os.environ.setdefault(k.strip(), v.strip())
+
         resolved_key = api_key or os.environ.get("ANTHROPIC_AUTH_TOKEN", "") or os.environ.get("MIMO_API_KEY", "") or os.environ.get("DASHSCOPE_API_KEY", "")
-        if not resolved_key:
-            resolved_key = "tp-c9p0u78w6r531hwctgt9h0yyml6mwzdglk72uhg8ipfu2ebk"
         self.provider = create_provider(
             provider_name,
             model=model,

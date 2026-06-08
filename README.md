@@ -34,7 +34,11 @@ cd mini-kira-code
 # 2. Install
 pip install -e .
 
-# 3. Run (API key is built-in, no setup needed)
+# 3. Configure API key
+cp .env.example .env
+# Edit .env and fill in your API key
+
+# 4. Run
 python -m kiracode.cli.chat
 ```
 
@@ -199,6 +203,7 @@ python -m kiracode.cli.chat --provider dashscope --model qwen-max
 
 ## Documentation
 
+- [docs/DEMO.md](docs/DEMO.md) — Real demo: KiraCode builds a Spring Boot project autonomously
 - [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) — Architecture design, Mermaid diagrams
 - [docs/ENV.md](docs/ENV.md) — Environment setup, Docker, configuration
 - [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md) — Development guide, testing, debugging

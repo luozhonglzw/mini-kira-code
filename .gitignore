@@ -23,9 +23,10 @@ ENV/
 .DS_Store
 Thumbs.db
 
-# Environment
+# Environment & secrets
 .env
 *.env
+.claude/
 
 # Test artifacts
 .pytest_cache/
