@@ -313,43 +313,50 @@ class ChatSession:
             )
             self.messages.append(assistant_msg)
 
+            # Execute all tool calls in parallel
+            tool_names = []
+            tool_ids = []
+            tool_tasks = []
             for tc in response.tool_calls:
                 func = tc.get("function", {})
-                tool_name = func.get("name", "")
+                tool_names.append(func.get("name", ""))
                 tool_args = func.get("arguments", "{}")
-                tool_id = tc.get("id", "")
+                tool_ids.append(tc.get("id", ""))
+                tool_tasks.append(self._execute_tool(tool_names[-1], tool_args))
 
-                console.print(f"  [cyan]Calling tool:[/cyan] {tool_name}")
-                try:
-                    result = await self._execute_tool(tool_name, tool_args)
-                except Exception as e:
-                    result = json.dumps({"success": False, "error": str(e)})
+            n = len(tool_tasks)
+            console.print(f"  [cyan]Executing {n} tool(s) in parallel...[/cyan]")
+            results = await asyncio.gather(*tool_tasks, return_exceptions=True)
+
+            # Process results and append tool messages
+            for i, (name, tool_id, result) in enumerate(zip(tool_names, tool_ids, results)):
+                if isinstance(result, Exception):
+                    result = json.dumps({"success": False, "error": str(result)})
 
                 # Show brief result
                 try:
                     result_data = json.loads(result)
                     if result_data.get("success"):
-                        if tool_name == "write_file":
-                            console.print(f"  [green]OK[/green] — {result_data.get('bytes_written', '?')} bytes written")
-                        elif tool_name == "read_file":
-                            console.print(f"  [green]OK[/green] — {result_data.get('lines', '?')} lines")
+                        if name == "write_file":
+                            console.print(f"  [{i+1}/{n}] [green]OK[/green] — {result_data.get('bytes_written', '?')} bytes written")
+                        elif name == "read_file":
+                            console.print(f"  [{i+1}/{n}] [green]OK[/green] — {result_data.get('lines', '?')} lines")
                         else:
-                            console.print(f"  [green]OK[/green] — exit code 0")
+                            console.print(f"  [{i+1}/{n}] [green]OK[/green] — exit code 0")
                     else:
                         err = result_data.get("error", "")
                         stderr = result_data.get("stderr", "")
                         exit_code = result_data.get("exit_code", "?")
                         detail = stderr[:200] if stderr else err[:200]
-                        console.print(f"  [red]Error[/red] (exit {exit_code}): {detail}")
+                        console.print(f"  [{i+1}/{n}] [red]Error[/red] (exit {exit_code}): {detail}")
                 except Exception:
-                    console.print(f"  [dim]Result:[/dim] {result[:200]}")
+                    console.print(f"  [{i+1}/{n}] [dim]Result:[/dim] {str(result)[:200]}")
 
-                # Append tool result message
                 tool_msg = LLMMessage(
                     role=MessageRole.TOOL,
-                    content=result,
+                    content=result if isinstance(result, str) else json.dumps(result),
                     tool_call_id=tool_id,
-                    name=tool_name,
+                    name=name,
                 )
                 self.messages.append(tool_msg)
 
@@ -445,8 +452,9 @@ Before each action, think step by step:
 1. **Always use tools** — never just describe code. Use write_file to create files, run_command to build and run.
 2. **Write COMPLETE code** — no placeholders, no "TODO", no "...", no "// implement later". Every file must be fully functional and runnable.
 3. **Be thorough** — include ALL imports, ALL annotations, ALL configurations. A Spring Boot project needs: pom.xml, Application class, Controller, templates, static files, application.properties.
-4. **Verify your work** — after creating files, run build commands and check for errors.
-5. **Self-heal on errors** — if a build or command fails:
+4. **BATCH tool calls** — when creating multiple files, return ALL write_file calls in a SINGLE response. Do NOT create files one by one across multiple responses. Example: if you need 8 files, return 8 write_file tool_calls at once. They run in parallel.
+5. **Verify your work** — after creating files, run build commands and check for errors.
+6. **Self-heal on errors** — if a build or command fails:
    a. Read the error message carefully
    b. Use read_file to check the problematic file
    c. Fix the code with write_file
@@ -456,15 +464,18 @@ Before each action, think step by step:
 
 ## When building a Spring Boot project:
 1. First create the directory: run_command("mkdir -p D:/agent/agent-project-codex-7/tests/project/PROJECT_NAME")
-2. Create pom.xml with spring-boot-starter-web, spring-boot-starter-thymeleaf, spring-boot-maven-plugin
-3. Create src/main/java/.../Application.java with @SpringBootApplication
-4. Create src/main/java/.../controller/HelloController.java with @RestController + @GetMapping
-5. Create src/main/resources/application.properties (server.port=8080)
-6. Create src/main/resources/templates/index.html (Thymeleaf template)
-7. Create src/main/resources/static/css/style.css and static/js/app.js
-8. Build: run_command("cd /d D:/agent/agent-project-codex-7/tests/project/PROJECT_NAME && mvn.cmd clean package -DskipTests")
-9. If build fails → read error → fix → rebuild (repeat up to 5 times)
-10. Create a start.bat to run in background:
+2. In ONE response, create ALL files at once using multiple write_file calls:
+   - pom.xml (spring-boot-starter-web, spring-boot-starter-thymeleaf, spring-boot-maven-plugin)
+   - src/main/java/.../Application.java (@SpringBootApplication)
+   - src/main/java/.../controller/HelloController.java (@RestController + @GetMapping)
+   - src/main/resources/application.properties (server.port=8080)
+   - src/main/resources/templates/index.html (Thymeleaf)
+   - src/main/resources/static/css/style.css
+   - src/main/resources/static/js/app.js
+   - .gitignore
+3. Build: run_command("cd /d D:/agent/agent-project-codex-7/tests/project/PROJECT_NAME && mvn.cmd clean package -DskipTests")
+4. If build fails → read error → fix → rebuild (repeat up to 5 times)
+5. Create start.bat and run:
     write_file("D:/agent/agent-project-codex-7/tests/project/PROJECT_NAME/start.bat",
       '@echo off\r\ncd /d %~dp0\r\nstart "" java -jar target\\PROJECT-0.0.1-SNAPSHOT.jar > app.log 2>&1\r\nexit')
     Then run: run_command("cmd.exe /c D:/agent/agent-project-codex-7/tests/project/PROJECT_NAME/start.bat")
