@@ -176,3 +176,67 @@ python -m kiracode.cli.chat
 ```
 
 KiraCode will create the project, build it, fix any errors, and start it — all autonomously.
+
+---
+
+## Demo 2: UI Screenshot Analysis (Vision AI)
+
+KiraCode can analyze UI screenshots using **OpenCV + Qwen-VL** vision model, detecting components, layout, colors, and generating code recommendations.
+
+### User Input
+
+```
+帮我分析这个截图 tests/screenshots/demo.png
+```
+
+### Analysis Result
+
+Input: Baidu logo image (6617 bytes)
+
+**Components Detected** (4 components, confidence 0.95-0.98):
+
+| # | Type | Text | Confidence |
+|---|------|------|------------|
+| 1 | image | — | 0.98 |
+| 2 | text | Baidu | 0.97 |
+| 3 | icon | — | 0.96 |
+| 4 | text | 百度 | 0.95 |
+
+**Layout**: Horizontal alignment — "Baidu" text, paw print icon, "百度" text placed side by side.
+
+**Colors Extracted**:
+- Primary: `#ff0000` (red)
+- Secondary: `#000000` (black)
+- Background: `#ffffff` (white)
+- Accent: `#0000ff` (blue)
+
+**Typography**: Sans-serif font, bold headings at 24px, body text at 16px.
+
+**Tech Recommendations**:
+- Framework: React
+- Styling: Tailwind CSS
+- Layout: Flexbox
+
+**Style Suggestions**: Use a clean, minimalistic approach with high contrast between red and black elements.
+
+### How It Works
+
+1. **OpenCV Preprocessing** — Resize, Gaussian blur, JPEG encoding for optimal vision API input
+2. **Qwen-VL Analysis** — Alibaba's vision model analyzes the image with structured JSON output
+3. **Component Detection** — Identifies UI elements (buttons, text, icons, images) with positions and confidence scores
+4. **Code Generation** — Recommends framework, styling approach, and layout strategy
+
+### Try It Yourself
+
+```bash
+python -m kiracode.cli.chat
+
+# Then type:
+# 帮我分析这个截图 tests/screenshots/demo.png
+```
+
+Or run the standalone test:
+
+```bash
+python tests/test_screenshot_live.py
+```

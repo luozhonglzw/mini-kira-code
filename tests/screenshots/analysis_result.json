@@ -1,0 +1,116 @@
+{
+  "success": true,
+  "cached": false,
+  "image_md5": "6c825ed7ea4cd25657288ab4f7d0227f",
+  "detail_level": "standard",
+  "model": "qwen-vl-max",
+  "components": [
+    {
+      "type": "image",
+      "text": "",
+      "position": {
+        "x": 0,
+        "y": 0,
+        "width": 200,
+        "height": 50
+      },
+      "color": {
+        "bg": "#ffffff",
+        "text": "#000000",
+        "border": "#000000"
+      },
+      "style": "Logo with red and blue colors, featuring a paw print icon and text.",
+      "confidence": 0.98
+    },
+    {
+      "type": "text",
+      "text": "Baidu",
+      "position": {
+        "x": 0,
+        "y": 10,
+        "width": 80,
+        "height": 30
+      },
+      "color": {
+        "bg": "#ffffff",
+        "text": "#ff0000",
+        "border": "#000000"
+      },
+      "style": "Bold red text with sans-serif font.",
+      "confidence": 0.97
+    },
+    {
+      "type": "icon",
+      "text": "",
+      "position": {
+        "x": 80,
+        "y": 10,
+        "width": 40,
+        "height": 40
+      },
+      "color": {
+        "bg": "#000000",
+        "text": "#000000",
+        "border": "#000000"
+      },
+      "style": "Blue paw print icon with circular design.",
+      "confidence": 0.96
+    },
+    {
+      "type": "text",
+      "text": "百度",
+      "position": {
+        "x": 120,
+        "y": 10,
+        "width": 80,
+        "height": 30
+      },
+      "color": {
+        "bg": "#ffffff",
+        "text": "#000000",
+        "border": "#000000"
+      },
+      "style": "Black Chinese characters in bold, sans-serif font.",
+      "confidence": 0.95
+    }
+  ],
+  "layout": {
+    "type": "horizontal",
+    "direction": "horizontal",
+    "description": "The layout is horizontally aligned with the logo components placed side by side: 'Baidu' text, paw print icon, and '百度' text.",
+    "sections": [
+      "header"
+    ]
+  },
+  "colors": {
+    "primary": "#ff0000",
+    "secondary": "#000000",
+    "background": "#ffffff",
+    "surface": "#ffffff",
+    "text_primary": "#000000",
+    "text_secondary": "#000000",
+    "accent": "#0000ff",
+    "palette": [
+      "#ff0000",
+      "#000000",
+      "#0000ff",
+      "#ffffff"
+    ]
+  },
+  "typography": {
+    "font_family": "sans-serif",
+    "heading_style": "bold, large",
+    "body_style": "regular, medium",
+    "font_sizes": {
+      "heading": "24px",
+      "body": "16px",
+      "caption": "12px"
+    }
+  },
+  "style_suggestions": "Use a clean, minimalistic approach with high contrast between red and black elements. Consider using Flexbox for horizontal alignment of logo components.",
+  "tech_recommendations": {
+    "framework": "react",
+    "styling": "tailwind",
+    "layout_strategy": "flexbox"
+  }
+}
