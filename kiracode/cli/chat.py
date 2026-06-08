@@ -211,6 +211,21 @@ class ChatSession:
                 },
             },
         },
+        {
+            "type": "function",
+            "function": {
+                "name": "screenshot_analyze",
+                "description": "Analyze a UI screenshot image using vision AI. Detects components (buttons, text, icons), layout, colors, typography, and provides tech recommendations. Supports PNG, JPG, WEBP, BMP formats. Use this when the user asks to analyze, understand, or describe an image or screenshot.",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "image_path": {"type": "string", "description": "Path to the image file (absolute or relative)"},
+                        "detail_level": {"type": "string", "enum": ["fast", "standard", "detailed"], "description": "Analysis detail level (default: standard)"},
+                    },
+                    "required": ["image_path"],
+                },
+            },
+        },
     ]
 
     async def _execute_tool(self, name: str, arguments: str) -> str:
@@ -243,6 +258,14 @@ class ChatSession:
             if any(kw in cmd for kw in ("mvn", "gradle", "npm install", "pip install", "cargo build")):
                 timeout = 600
             result = await skill.execute(command=cmd, timeout=timeout)
+            return json.dumps(result, ensure_ascii=False)
+
+        elif name == "screenshot_analyze":
+            skill = skill_registry.get_instance("screenshot_analyze")
+            result = await skill.execute(
+                image_input=args["image_path"],
+                detail_level=args.get("detail_level", "standard"),
+            )
             return json.dumps(result, ensure_ascii=False)
 
         else:
@@ -354,6 +377,9 @@ class ChatSession:
                             console.print(f"  [{i+1}/{n}] [green]OK[/green] — {result_data.get('bytes_written', '?')} bytes written")
                         elif name == "read_file":
                             console.print(f"  [{i+1}/{n}] [green]OK[/green] — {result_data.get('lines', '?')} lines")
+                        elif name == "screenshot_analyze":
+                            components = result_data.get("components", [])
+                            console.print(f"  [{i+1}/{n}] [green]OK[/green] — {len(components)} components detected")
                         else:
                             console.print(f"  [{i+1}/{n}] [green]OK[/green] — exit code 0")
                     else:
@@ -445,8 +471,9 @@ class ChatSession:
 
 ## Your Tools
 - write_file(path, content) — Create or overwrite a file. Path MUST be absolute or relative to D:\agent\agent-project-codex-7
-- read_file(path) — Read a file's content
+- read_file(path) — Read a file's content (TEXT files only — do NOT use for images)
 - run_command(command) — Execute a shell command (runs in D:\agent\agent-project-codex-7)
+- screenshot_analyze(image_path, detail_level) — Analyze UI screenshots with vision AI. Detects components, layout, colors, typography. Use this when the user asks to analyze/understand/describe any image or screenshot. Supports PNG, JPG, WEBP, BMP.
 
 ## CRITICAL: Working Directory
 ALL file paths must be under D:\agent\agent-project-codex-7\tests\project\
@@ -463,6 +490,7 @@ Before each action, think step by step:
 
 ## Core Rules
 1. **Always use tools** — never just describe code. Use write_file to create files, run_command to build and run.
+1b. **NEVER use read_file for images** — PNG/JPG/WEBP are binary files, read_file will return garbage. Use screenshot_analyze instead.
 2. **Write COMPLETE code** — no placeholders, no "TODO", no "...", no "// implement later". Every file must be fully functional and runnable.
 3. **Be thorough** — include ALL imports, ALL annotations, ALL configurations. A Spring Boot project needs: pom.xml, Application class, Controller, templates, static files, application.properties.
 4. **MINIMIZE ROUNDS** — the user wants everything done in as few responses as possible:
