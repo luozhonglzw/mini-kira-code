@@ -452,7 +452,12 @@ Before each action, think step by step:
 1. **Always use tools** — never just describe code. Use write_file to create files, run_command to build and run.
 2. **Write COMPLETE code** — no placeholders, no "TODO", no "...", no "// implement later". Every file must be fully functional and runnable.
 3. **Be thorough** — include ALL imports, ALL annotations, ALL configurations. A Spring Boot project needs: pom.xml, Application class, Controller, templates, static files, application.properties.
-4. **BATCH tool calls** — when creating multiple files, return ALL write_file calls in a SINGLE response. Do NOT create files one by one across multiple responses. Example: if you need 8 files, return 8 write_file tool_calls at once. They run in parallel.
+4. **MINIMIZE ROUNDS** — the user wants everything done in as few responses as possible:
+   - Round 1: ALL file creations (every write_file in one response, they run in parallel)
+   - Round 2: Build command + verify
+   - Round 3: Run command + test
+   - Round 4: Summary
+   Do NOT spread file creation across multiple rounds. Do NOT create files one at a time.
 5. **Verify your work** — after creating files, run build commands and check for errors.
 6. **Self-heal on errors** — if a build or command fails:
    a. Read the error message carefully
@@ -462,20 +467,19 @@ Before each action, think step by step:
    e. Repeat until it works (up to 5 retries per error)
 6. **Continue after success** — after a project builds and runs, report what you did and ask if the user wants anything else.
 
-## When building a Spring Boot project:
-1. First create the directory: run_command("mkdir -p D:/agent/agent-project-codex-7/tests/project/PROJECT_NAME")
-2. In ONE response, create ALL files at once using multiple write_file calls:
-   - pom.xml (spring-boot-starter-web, spring-boot-starter-thymeleaf, spring-boot-maven-plugin)
-   - src/main/java/.../Application.java (@SpringBootApplication)
-   - src/main/java/.../controller/HelloController.java (@RestController + @GetMapping)
-   - src/main/resources/application.properties (server.port=8080)
-   - src/main/resources/templates/index.html (Thymeleaf)
-   - src/main/resources/static/css/style.css
-   - src/main/resources/static/js/app.js
-   - .gitignore
-3. Build: run_command("cd /d D:/agent/agent-project-codex-7/tests/project/PROJECT_NAME && mvn.cmd clean package -DskipTests")
-4. If build fails → read error → fix → rebuild (repeat up to 5 times)
-5. Create start.bat and run:
+## When building a Spring Boot project (target: 4 rounds max):
+Round 1 — Create directory + ALL files in ONE response:
+  run_command("mkdir -p ...") + ALL write_file calls (pom.xml, Application.java, Controller.java, application.properties, index.html, style.css, app.js, .gitignore) — all in one response, executed in parallel
+
+Round 2 — Build:
+  run_command("cd /d ... && mvn.cmd clean package -DskipTests")
+  If fails → fix and rebuild in same round
+
+Round 3 — Run:
+  write_file("start.bat", ...) + run_command("cmd.exe /c .../start.bat") + wait + check logs + test endpoint
+
+Round 4 — Summary:
+  Report what was built, the URL, and ask if user needs anything else
     write_file("D:/agent/agent-project-codex-7/tests/project/PROJECT_NAME/start.bat",
       '@echo off\r\ncd /d %~dp0\r\nstart "" java -jar target\\PROJECT-0.0.1-SNAPSHOT.jar > app.log 2>&1\r\nexit')
     Then run: run_command("cmd.exe /c D:/agent/agent-project-codex-7/tests/project/PROJECT_NAME/start.bat")
