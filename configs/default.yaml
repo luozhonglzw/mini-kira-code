@@ -1,0 +1,115 @@
+# KiraCode Default Configuration
+# Override via environment variables: KIRACODE_<SECTION>__<KEY>
+
+app:
+  name: "KiraCode"
+  version: "0.1.0"
+  log_level: "INFO"
+  log_format: "json"  # json | console
+
+llm:
+  provider: "mimo"         # mimo | dashscope | openai | anthropic | mock
+  model: "mimo-v2.5-pro"   # mimo-v2.5-pro (reasoning/agent)
+  temperature: 0.7
+  max_tokens: 4096
+  timeout: 300
+  # DashScope (阿里云百炼) config — primary provider
+  # dashscope_api_key: ""  # set via DASHSCOPE_API_KEY env var (format: sk-xxxx)
+  # dashscope_model: "qwen-max"
+  # dashscope_base_url: "https://dashscope.aliyuncs.com/compatible-mode/v1"
+  # MiMo Token Plan API config — alternative provider
+  # mimo_api_key: ""  # set via MIMO_API_KEY env var (format: tp-xxxx)
+  # mimo_model: "mimo-v2.5-pro"  # mimo-v2.5-pro (agent) | mimo-v2.5 (multimodal)
+  # mimo_base_url: "https://token-plan-cn.xiaomimimo.com/v1"
+  # mimo_thinking_mode: false
+
+agents:
+  architect:
+    enabled: true
+    max_subtasks: 10
+    planning_strategy: "decompose"  # decompose | incremental
+  coder:
+    enabled: true
+    max_retries: 3
+    sandbox_enabled: true
+  reviewer:
+    enabled: true
+    strict_mode: false
+  security_auditor:
+    enabled: true
+    scan_secrets: true
+    scan_sast: true
+
+memory:
+  working_memory:
+    max_items: 50
+    ttl_seconds: 3600
+  episodic_memory:
+    max_entries: 1000
+    persistence_path: ".kiracode/memory/episodic.jsonl"
+  semantic_memory:
+    embedding_dim: 384
+    persistence_path: ".kiracode/memory/semantic.index"
+  graph:
+    enabled: true
+    max_nodes: 5000
+
+context:
+  max_tokens: 128000
+  reserve_tokens: 4096
+  compression_threshold: 0.8
+  strategy: "sliding_window"  # sliding_window | smart_compress
+
+token_budget:
+  total: 128000
+  agent_reserve: 8192
+  tool_reserve: 16384
+  warning_threshold: 0.85
+  hard_limit: 0.95
+
+security:
+  sandbox:
+    enabled: true
+    timeout: 30
+    max_memory_mb: 512
+  secrets_scanner:
+    enabled: true
+    entropy_threshold: 4.5
+  audit_log:
+    enabled: true
+    path: ".kiracode/audit/audit.jsonl"
+  rollback:
+    enabled: true
+    strategy: "git"  # git | snapshot
+
+skills:
+  auto_discover: true
+  directories:
+    - "kiracode/skills/builtin"
+    - ".kiracode/skills"
+  rag:
+    enabled: true
+    top_k: 5
+    score_threshold: 0.6
+
+vision:
+  qwen_vl:
+    # api_key: ""  # set via DASHSCOPE_API_KEY env var
+    base_url: "https://dashscope.aliyuncs.com/compatible-mode/v1"
+    model: "qwen-vl-max"  # qwen-vl-max (best) | qwen-vl-plus (faster/cheaper)
+    max_tokens: 4096
+    temperature: 0.1
+  yolo:
+    enabled: false  # set true to enable local YOLO UI detection
+    model_path: "yolov8n.pt"
+    confidence: 0.35
+    device: "cpu"  # cpu | cuda
+  preprocessing:
+    max_dimension: 1024
+    default_detail_level: "standard"  # fast | standard | detailed
+    jpeg_quality: 90
+
+cli:
+  theme: "dark"
+  show_token_usage: true
+  show_agent_state: true

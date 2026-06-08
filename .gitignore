@@ -1,0 +1,42 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+dist/
+build/
+*.egg
+.eggs/
+
+# Virtual environments
+.venv/
+venv/
+ENV/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Environment
+.env
+*.env
+
+# Test artifacts
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Project generated files
+tests/project/
+*.session.md
+test_mimo_session.md
+test_session.md
+output_sarif.json
+.kiracode/
+kiracode项目介绍.md
