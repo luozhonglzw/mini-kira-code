@@ -16,8 +16,10 @@ skill_meta = SkillMeta(
     source="builtin",
 )
 
-# All commands run inside this directory
 WORK_DIR = "D:/agent/agent-project-codex-7"
+
+# Commands matching these patterns are long-running servers — use detach mode
+SERVER_PATTERNS = ("java -jar", "spring-boot:run", "node server", "python -m http.server", "npm start")
 
 
 class SkillClass:
@@ -28,12 +30,22 @@ class SkillClass:
 
     async def execute(self, command: str, timeout: int = 300) -> dict[str, Any]:
         self._sandbox.config.timeout = timeout
-        # Use cmd.exe on Windows to avoid WSL bash issues
+
         if sys.platform == "win32":
             cmd = ["cmd.exe", "/c", command]
         else:
             cmd = ["bash", "-c", command]
-        result = await self._sandbox.run_command(cmd, cwd=WORK_DIR)
+
+        # Detect server commands → use detach mode
+        is_server = any(pat in command.lower() for pat in SERVER_PATTERNS)
+
+        if is_server:
+            result = await self._sandbox.run_command(
+                cmd, cwd=WORK_DIR, detach=True, detach_timeout=5.0,
+            )
+        else:
+            result = await self._sandbox.run_command(cmd, cwd=WORK_DIR)
+
         return {
             "success": result.success,
             "stdout": result.stdout,

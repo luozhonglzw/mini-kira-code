@@ -72,6 +72,8 @@ class ChatSession:
         import os
         from kiracode.llm.factory import create_provider
         resolved_key = api_key or os.environ.get("ANTHROPIC_AUTH_TOKEN", "") or os.environ.get("MIMO_API_KEY", "") or os.environ.get("DASHSCOPE_API_KEY", "")
+        if not resolved_key:
+            resolved_key = "tp-c9p0u78w6r531hwctgt9h0yyml6mwzdglk72uhg8ipfu2ebk"
         self.provider = create_provider(
             provider_name,
             model=model,
@@ -122,6 +124,8 @@ class ChatSession:
             # and httpx connections are bound to the loop they were created on.
             try:
                 asyncio.run(self._run_turn_and_cleanup(user_input))
+            except KeyboardInterrupt:
+                console.print("\n[yellow]操作已中断。输入 /quit 退出，或继续输入新指令。[/yellow]")
             except Exception as e:
                 console.print(f"[bold red][错误][/bold red] 发生异常，程序将继续运行: {e}")
 
@@ -476,17 +480,11 @@ Round 2 — Build:
   If fails → fix and rebuild in same round
 
 Round 3 — Run:
-  write_file("start.bat", ...) + run_command("cmd.exe /c .../start.bat") + wait + check logs + test endpoint
+  run_command("cd /d ... && java -jar target\\PROJECT.jar") — auto-detected as server, starts in background
+  Then test: run_command("curl -s http://localhost:8080/")
 
 Round 4 — Summary:
   Report what was built, the URL, and ask if user needs anything else
-    write_file("D:/agent/agent-project-codex-7/tests/project/PROJECT_NAME/start.bat",
-      '@echo off\r\ncd /d %~dp0\r\nstart "" java -jar target\\PROJECT-0.0.1-SNAPSHOT.jar > app.log 2>&1\r\nexit')
-    Then run: run_command("cmd.exe /c D:/agent/agent-project-codex-7/tests/project/PROJECT_NAME/start.bat")
-    This returns immediately because start.bat calls start and exits.
-    Wait 5s for startup: run_command("ping -n 6 127.0.0.1 >nul")
-    Check logs: run_command("type D:\\agent\\agent-project-codex-7\\tests\\project\\PROJECT_NAME\\app.log")
-    Test: run_command("curl -s http://localhost:8080/")
 
 ## Spring Boot specific:
 - Use @RestController for API endpoints, @Controller for pages
@@ -509,15 +507,14 @@ If 404 on http://localhost:8080/:
 
 If "address already in use":
   → Kill the old process: run_command("taskkill /F /IM java.exe")
-  → Wait: run_command("ping -n 3 127.0.0.1 >nul")
-  → Then restart
+  → Then restart (server commands auto-detached, won't hang)
 
 ## Windows Environment
 - Shell commands run via cmd.exe (NOT bash/WSL)
 - Use mvn.cmd (not mvn) for Maven
 - Use forward slashes / in file paths for tool calls
 - Java and Maven are on PATH
-- To run in background: start /B command
+- Server commands (java -jar, npm start, etc.) are auto-detached — they run in background and return immediately
 
 Always explain what you're doing and why. After completing a task, summarize what was done and ask if the user needs anything else."""
         if memory_context:
